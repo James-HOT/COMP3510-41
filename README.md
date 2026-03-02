@@ -1,4 +1,4 @@
-# 🏷️ Lost & Found System – Kwai Chung 2026
+# 🏷️ Lost & Found Web
 
 Simple, mobile-friendly **Lost & Found** platform with map visualization, bilingual support (English / 中文), quick email-based login, image upload, admin matching tool, and OpenStreetMap integration.
 
@@ -57,24 +57,6 @@ Campus / community / shopping mall lost & found boards
 - Email: `admin@gmail.com`  
 - Any password works  
 → unlocks **Match Items**, edit & delete everywhere
-
-## Important Limitations / Notes
-
-- **Everything is stored in browser localStorage**  
-  → data is **local to each device/browser** — not shared between users
-- Matching rule is strict: **exact same category + exact same title** (case-insensitive)
-- When admin matches → **found item is deleted**, lost item → status = `matched`
-- No email verification, no real authentication
-- Photos are stored as data URLs → large images can quickly fill localStorage quota (~5–10 MB)
-
-## Future Improvement Ideas
-
-- Move data to Firebase / Supabase / PocketBase (real multi-user)
-- Add chat/contact form between finder & loser
-- QR code for each item report
-- Push notifications (via PWA + service worker)
-- Export / import data
-- Better duplicate detection (fuzzy title matching)
 
 ## Folder Structure
 
