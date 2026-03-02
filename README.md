@@ -4,7 +4,7 @@ Simple, mobile-friendly **Lost & Found** platform with map visualization, biling
 
 Built as a pure frontend + localStorage application — **no backend server required**.
 
-https://github.com/yourusername/lost-found-kwai-2026
+[https://github.com/yourusername/lost-found-kwai-2026](https://github.com/James-HOT/COMP3510-41.git)
 
 ## ✨ Features
 
@@ -30,22 +30,9 @@ Campus / community / shopping mall lost & found boards
 
 (You can host it easily on any static hosting)
 
-- GitHub Pages → https://yourusername.github.io/lost-found-kwai-2026/
+- GitHub Pages → [https://yourusername.github.io/lost-found-kwai-2026/](https://github.com/James-HOT/COMP3510-41.git)
 - Vercel / Netlify / Cloudflare Pages → drag & drop folder
 - Local: just open `index.html` in browser
-
-## Screenshots
-
-<!-- You can later add real screenshots here -->
-
-**Main view**  
-![main-view](https://via.placeholder.com/800x500/2563eb/ffffff?text=Main+Grid+%26+Map)
-
-**Report modal**  
-![report-modal](https://via.placeholder.com/500x700/16a34a/ffffff?text=Report+Item+Modal)
-
-**Admin matching**  
-![admin-match](https://via.placeholder.com/600x500/eab308/1f2937?text=Match+Lost+%26+Found)
 
 ## Tech Stack
 
