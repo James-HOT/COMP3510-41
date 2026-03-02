@@ -4,7 +4,7 @@ Simple, mobile-friendly **Lost & Found** platform with map visualization, biling
 
 Built as a pure frontend + localStorage application — **no backend server required**.
 
-[https://github.com/yourusername/lost-found-kwai-2026](https://github.com/James-HOT/COMP3510-41.git)
+[https://github.com/James-HOT/COMP3510-41.git](https://github.com/James-HOT/COMP3510-41.git)
 
 ## ✨ Features
 
@@ -30,7 +30,7 @@ Campus / community / shopping mall lost & found boards
 
 (You can host it easily on any static hosting)
 
-- GitHub Pages → [https://yourusername.github.io/lost-found-kwai-2026/](https://github.com/James-HOT/COMP3510-41.git)
+- GitHub Pages → [https://github.com/James-HOT/COMP3510-41.git](https://github.com/James-HOT/COMP3510-41.git)
 - Vercel / Netlify / Cloudflare Pages → drag & drop folder
 - Local: just open `index.html` in browser
 
