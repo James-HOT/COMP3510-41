@@ -1,219 +1,240 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lost & Found System</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lost & Found</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Leaflet CSS & JS for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="/index.css">
 </head>
-<body data-lang="en">
-<header>
-  <div class="header-inner">
-    <h1 data-en="🏷️ Lost & Found" data-zh="🏷️ 失物招領">🏷️ Lost & Found</h1>
-    <div class="controls">
-      <button class="btn btn-primary hidden" id="reportBtn" data-en="Report Item" data-zh="報告物品">Report Item</button>
-      <button class="btn btn-warning hidden" id="matchBtn" data-en="Match Items" data-zh="配對物品">Match Items</button>
-      <button class="btn btn-outline" id="loginBtn" data-en="Login" data-zh="登入">Login</button>
-      <button class="btn btn-outline" id="langBtn" data-en="中文" data-zh="English">中文</button>
-    </div>
-  </div>
-</header>
-<main>
-  <div id="adminNotice" class="admin-notice hidden"></div>
-  <section class="toolbar">
-    <div>
-      <label data-en="Type" data-zh="類型">Type</label>
-      <select id="typeFilter">
-        <option value="all" data-en="All" data-zh="全部">All</option>
-        <option value="lost" data-en="Lost" data-zh="遺失">Lost</option>
-        <option value="found" data-en="Found" data-zh="拾獲">Found</option>
-        <option value="matched" data-en="Matched" data-zh="已配對">Matched</option>
-      </select>
-    </div>
-    <div>
-      <label data-en="Category" data-zh="類別">Category</label>
-      <select id="categoryFilter">
-        <option value="all" data-en="All Categories" data-zh="所有類別">All Categories</option>
-        <option value="electronics" data-en="Electronics" data-zh="電子產品">Electronics</option>
-        <option value="wallet" data-en="Wallet / Cards / Cash" data-zh="錢包／證件／現金">Wallet / Cards / Cash</option>
-        <option value="keys" data-en="Keys" data-zh="鎖匙">Keys</option>
-        <option value="documents" data-en="Documents / ID" data-zh="文件／身份證明">Documents / ID</option>
-        <option value="other" data-en="Other" data-zh="其他">Other</option>
-      </select>
-    </div>
-    <div>
-      <label data-en="Search" data-zh="搜尋">Search</label>
-      <input type="text" id="searchInput" data-en-placeholder="Title, location, description..." data-zh-placeholder="標題、地點、描述...">
-    </div>
-  </section>
-  <p id="count" style="text-align:center; color:var(--gray); margin:1.6rem 0; font-weight:500;"></p>
-  <section class="grid" id="itemsGrid"></section>
-  <section style="margin:4rem 0 2.5rem;">
-    <h2 data-en="Items on Map" data-zh="地圖上的物品位置">Items on Map</h2>
-    <div id="map"></div>
-  </section>
-</main>
+<body class="min-h-screen text-zinc-900">
 
-<!-- Login Modal -->
-<div class="modal" id="loginModal">
-  <div class="modal-box" style="max-width:420px;">
-    <div class="modal-header">
-      <h2 data-en="Login / Quick Register" data-zh="登入 / 快速註冊">Login / Quick Register</h2>
-      <span style="font-size:2.4rem;cursor:pointer;" onclick="closeModal('loginModal')">×</span>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label data-en="Email" data-zh="電郵">Email</label>
-        <input type="email" id="loginEmail" placeholder="your@email.com" autocomplete="email" required>
-      </div>
-      <div class="form-group">
-        <label data-en="Password" data-zh="密碼">Password</label>
-        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" required>
-      </div>
-      <p id="loginHint" style="font-size:0.94rem; color:#6b7280; margin-top:1.1rem;"
-         data-en="No registration needed — just enter your email and password to sign in or create an account instantly."
-         data-zh="無需註冊，直接輸入電郵與密碼即可快速登入／建立帳號。">
-        No registration needed — just enter your email and password to sign in or create an account instantly.
-      </p>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('loginModal')" data-en="Cancel" data-zh="取消">Cancel</button>
-      <button class="btn btn-primary" onclick="handleLogin()" data-en="Login" data-zh="登入">Login</button>
-    </div>
-  </div>
-</div>
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-zinc-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center cursor-pointer" onclick="showView('home')">
+                    <i data-lucide="search" class="h-6 w-6 text-indigo-600 mr-2"></i>
+                    <span class="font-bold text-xl tracking-tight" id="nav-title">Lost & Found</span>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <select id="lang-select" onchange="changeLang(this.value)" class="bg-zinc-100 border-none rounded-md py-1 px-2 text-sm font-medium focus:ring-2 focus:ring-indigo-500">
+                        <option value="en">English</option>
+                        <option value="zh">繁體中文</option>
+                    </select>
 
-<!-- Report Modal -->
-<div class="modal" id="reportModal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h2 data-en="Report Lost or Found Item" data-zh="報告遺失或拾獲物品">Report Lost or Found Item</h2>
-      <span style="font-size:2.4rem;cursor:pointer;" onclick="closeModal('reportModal')">×</span>
-    </div>
-    <div class="modal-body">
-      <form id="reportForm" autocomplete="off">
-        <div class="form-group">
-          <label data-en="Your Name *" data-zh="您的姓名 *">Your Name *</label>
-          <input type="text" id="reportName" name="name" required autocomplete="name">
-        </div>
-        <div class="form-group">
-          <label data-en="Status *" data-zh="狀態 *">Status *</label>
-          <select name="status" required>
-            <option value="">-- Please select --</option>
-            <option value="lost" data-en="I lost this" data-zh="我遺失了此物品">I lost this</option>
-            <option value="found" data-en="I found this" data-zh="我拾獲此物品">I found this</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label data-en="Category *" data-zh="類別 *">Category *</label>
-          <select name="category" required>
-            <option value="">-- Please select --</option>
-            <option value="electronics">Electronics</option>
-            <option value="wallet">Wallet / Cards / Cash</option>
-            <option value="keys">Keys</option>
-            <option value="documents">Documents / ID</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label data-en="Title *" data-zh="標題 *">Title *</label>
-          <input type="text" name="title" required placeholder="e.g. Black AirPods Pro 2">
-        </div>
-        <div class="form-group">
-          <label data-en="Location *" data-zh="地點 *">Location *</label>
-          <input type="text" name="location" required placeholder="e.g. Kwai Chung Plaza near MTR Exit B">
-        </div>
-        <div class="form-group">
-          <label data-en="Date *" data-zh="日期 *">Date *</label>
-          <input type="date" name="date" required>
-        </div>
-        <div class="form-group">
-          <label data-en="Photo (optional)" data-zh="相片 (可選)">Photo (optional)</label>
-          <input type="file" id="imageInput" accept="image/*">
-          <img id="preview" style="max-width:100%; max-height:240px; margin-top:1.2rem; display:none; border-radius:8px;" alt="Photo preview">
-        </div>
-        <div class="form-group">
-          <label data-en="Description" data-zh="描述">Description</label>
-          <textarea name="description" rows="4" maxlength="600" placeholder="Color, brand, special features..."></textarea>
-        </div>
-        <div class="form-group">
-          <label data-en="Contact Info *" data-zh="聯絡方式 *">Contact Info *</label>
-          <input type="text" name="contact" required placeholder="Phone or email">
-        </div>
-      </form>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('reportModal')" data-en="Cancel" data-zh="取消">Cancel</button>
-      <button class="btn btn-primary" onclick="submitReport()" data-en="Submit" data-zh="提交">Submit</button>
-    </div>
-  </div>
-</div>
+                    <!-- Always Visible Report Button -->
+                    <button onclick="handleReportClick()" class="hidden sm:flex items-center bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                        <i data-lucide="plus" class="h-4 w-4 mr-1"></i> <span class="t-report">Report Item</span>
+                    </button>
 
-<!-- Edit Modal -->
-<div class="modal" id="editModal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h2 data-en="Edit Item" data-zh="編輯物品">Edit Item</h2>
-      <span style="font-size:2.4rem;cursor:pointer;" onclick="closeModal('editModal')">×</span>
-    </div>
-    <div class="modal-body">
-      <form id="editForm" autocomplete="off">
-        <input type="hidden" id="editId">
-        <div class="form-group">
-          <label data-en="Status" data-zh="狀態">Status</label>
-          <select id="editStatus">
-            <option value="lost">Lost / 遺失</option>
-            <option value="found">Found / 拾獲</option>
-            <option value="matched">Matched / 已配對</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label data-en="Category" data-zh="類別">Category</label>
-          <select id="editCategory">
-            <option value="electronics">Electronics / 電子產品</option>
-            <option value="wallet">Wallet / Cards / Cash / 錢包／證件／現金</option>
-            <option value="keys">Keys / 鎖匙</option>
-            <option value="documents">Documents / ID / 文件／身份證明</option>
-            <option value="other">Other / 其他</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label data-en="Title" data-zh="標題">Title</label>
-          <input type="text" id="editTitle" required>
-        </div>
-        <div class="form-group">
-          <label data-en="Location" data-zh="地點">Location</label>
-          <input type="text" id="editLocation" required>
-        </div>
-        <div class="form-group">
-          <label data-en="Date" data-zh="日期">Date</label>
-          <input type="date" id="editDate" required>
-        </div>
-        <div class="form-group">
-          <label data-en="Description" data-zh="描述">Description</label>
-          <textarea id="editDescription" rows="4" maxlength="600"></textarea>
-        </div>
-        <div class="form-group">
-          <label data-en="Contact Info" data-zh="聯絡方式">Contact Info</label>
-          <input type="text" id="editContact" required>
-        </div>
-      </form>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('editModal')" data-en="Cancel" data-zh="取消">Cancel</button>
-      <button class="btn btn-primary" onclick="saveEdit()" data-en="Save" data-zh="儲存">Save</button>
-    </div>
-  </div>
-</div>
+                    <!-- Logged Out Actions -->
+                    <div id="nav-logged-out" class="flex items-center space-x-2">
+                        <button onclick="showView('auth')" class="flex items-center bg-zinc-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors">
+                            <i data-lucide="log-in" class="h-4 w-4 mr-1"></i> <span class="t-auth-nav">Login / Register</span>
+                        </button>
+                    </div>
 
-<footer>
-  Lost & Found System • Map data © <a href="https://www.openstreetmap.org/copyright" style="color:#6b7280;">OpenStreetMap</a> • 2026
-</footer>
+                    <!-- Logged In Actions -->
+                    <div id="nav-logged-in" class="hidden items-center space-x-2">
+                        <button id="nav-admin-btn" onclick="showView('admin')" class="hidden items-center text-zinc-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                            <i data-lucide="shield-alert" class="h-4 w-4 mr-1"></i> <span class="hidden sm:inline t-admin">Admin Panel</span>
+                        </button>
+                        <button onclick="logout()" class="flex items-center text-zinc-600 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                            <i data-lucide="log-out" class="h-4 w-4 mr-1"></i> <span class="hidden sm:inline t-logout">Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-<script src="script.js"></script>
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- HOME VIEW -->
+        <div id="view-home" class="space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-zinc-200">
+                <div class="relative flex-1 w-full">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400"></i>
+                    <input type="text" id="search-input" oninput="renderItems()" class="w-full pl-10 pr-4 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Search by title or description...">
+                </div>
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <select id="filter-type" onchange="renderItems()" class="border border-zinc-300 rounded-lg py-2 px-3 text-sm focus:ring-2 focus:ring-indigo-500 bg-white">
+                        <option value="all" class="t-all-types">All Types</option>
+                        <option value="lost" class="t-lost">Lost</option>
+                        <option value="found" class="t-found">Found</option>
+                    </select>
+                    <select id="filter-category" onchange="renderItems()" class="border border-zinc-300 rounded-lg py-2 px-3 text-sm focus:ring-2 focus:ring-indigo-500 bg-white">
+                        <option value="all" class="t-all-cats">All Categories</option>
+                        <option value="electronics" class="t-electronics">Electronics</option>
+                        <option value="clothing" class="t-clothing">Clothing</option>
+                        <option value="documents" class="t-documents">Documents</option>
+                        <option value="keys" class="t-keys">Keys</option>
+                        <option value="pets" class="t-pets">Pets</option>
+                        <option value="other" class="t-other">Other</option>
+                    </select>
+                    <div class="flex bg-zinc-100 p-1 rounded-lg border border-zinc-200">
+                        <button onclick="setHomeMode('list')" id="btn-mode-list" class="p-1.5 rounded-md flex items-center transition-colors bg-white shadow-sm text-indigo-600"><i data-lucide="list" class="h-5 w-5"></i></button>
+                        <button onclick="setHomeMode('map')" id="btn-mode-map" class="p-1.5 rounded-md flex items-center transition-colors text-zinc-500 hover:text-zinc-700"><i data-lucide="map" class="h-5 w-5"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="home-list-mode" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+            <div id="home-map-mode" class="hidden h-[600px] w-full rounded-xl overflow-hidden shadow-sm border border-zinc-200 bg-white relative">
+                <div id="home-map" style="height: 100%; width: 100%;"></div>
+            </div>
+        </div>
+
+        <!-- AUTH VIEW (Login / Register) -->
+        <div id="view-auth" class="hidden max-w-md mx-auto mt-12 bg-white p-8 rounded-2xl shadow-sm border border-zinc-200">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-100 text-indigo-600 mb-4">
+                    <i data-lucide="log-in" class="w-8 h-8"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-zinc-900 t-auth-title">Login or Register</h2>
+                <p class="text-zinc-500 text-sm mt-2 t-auth-hint">Enter your email and password. We'll create an account if you don't have one.</p>
+                <p class="text-zinc-500 text-sm mt-2 t-admin-hint">To become admin, login with email "admin"</p>
+            </div>
+            <div id="auth-error" class="hidden mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-start text-sm"></div>
+            <form onsubmit="handleAuth(event)" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-1.5 t-email">Email</label>
+                    <div class="relative">
+                        <i data-lucide="mail" class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400"></i>
+                        <input type="text" id="auth-email" required class="w-full pl-10 pr-4 py-2.5 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-indigo-500" placeholder="name@example.com">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 mb-1.5 t-password">Password</label>
+                    <div class="relative">
+                        <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400"></i>
+                        <input type="password" id="auth-password" required class="w-full pl-10 pr-4 py-2.5 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-indigo-500" placeholder="••••••••">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white py-2.5 px-4 rounded-xl font-medium hover:bg-indigo-700 t-continue">Continue</button>
+            </form>
+        </div>
+
+        <!-- REPORT VIEW -->
+        <div id="view-report" class="hidden max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border border-zinc-200 overflow-hidden">
+            <div class="bg-zinc-50 border-b border-zinc-200 px-8 py-6">
+                <h2 class="text-2xl font-bold text-zinc-900 t-report">Report Item</h2>
+            </div>
+            <form onsubmit="submitReport(event)" class="p-8">
+                <div id="report-error" class="hidden mb-8 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-start text-sm"></div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 mb-2 t-type">Type</label>
+                            <div class="flex gap-4">
+                                <label id="lbl-type-lost" class="flex-1 flex items-center justify-center py-3 px-4 rounded-xl border-2 cursor-pointer transition-all border-red-500 bg-red-50 text-red-700 font-semibold">
+                                    <input type="radio" name="report-type" value="lost" checked onchange="updateTypeUI()" class="sr-only">
+                                    <span class="t-lost">Lost</span>
+                                </label>
+                                <label id="lbl-type-found" class="flex-1 flex items-center justify-center py-3 px-4 rounded-xl border-2 cursor-pointer transition-all border-zinc-200 text-zinc-600">
+                                    <input type="radio" name="report-type" value="found" onchange="updateTypeUI()" class="sr-only">
+                                    <span class="t-found">Found</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 mb-1.5 t-title">Title</label>
+                            <input type="text" id="report-title" required class="w-full px-4 py-2.5 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 mb-1.5 t-category">Category</label>
+                            <select id="report-category" class="w-full px-4 py-2.5 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-indigo-500 bg-white">
+                                <option value="electronics" class="t-electronics">Electronics</option>
+                                <option value="clothing" class="t-clothing">Clothing</option>
+                                <option value="documents" class="t-documents">Documents</option>
+                                <option value="keys" class="t-keys">Keys</option>
+                                <option value="pets" class="t-pets">Pets</option>
+                                <option value="other" class="t-other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 mb-1.5 t-desc">Description</label>
+                            <textarea id="report-desc" required rows="4" class="w-full px-4 py-2.5 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 mb-1.5 t-contact">Contact Info</label>
+                            <input type="text" id="report-contact" required class="w-full px-4 py-2.5 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 mb-1.5 t-photo">Photo</label>
+                            <input type="file" id="report-photo" accept="image/*" onchange="handlePhotoUpload(event)" class="w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                            <img id="photo-preview" class="hidden mt-4 w-full h-48 object-cover rounded-xl border border-zinc-200">
+                        </div>
+                    </div>
+                    <div class="space-y-6 flex flex-col">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 mb-1.5 flex items-center"><i data-lucide="map-pin" class="w-4 h-4 mr-1.5 text-zinc-400"></i> <span class="t-location">Location</span></label>
+                            <p class="text-sm text-zinc-500 mb-3 t-select-loc">Select location on map</p>
+                            <div id="selected-loc-display" class="hidden mb-4 p-3 bg-indigo-50 border border-indigo-100 rounded-lg text-sm text-indigo-900 font-medium"></div>
+                        </div>
+                        <div class="flex-1 min-h-[400px] rounded-xl overflow-hidden border border-zinc-200 relative z-0">
+                            <div id="report-map" style="height: 100%; width: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-10 pt-6 border-t border-zinc-200 flex justify-end gap-4">
+                    <button type="button" onclick="showView('home')" class="px-6 py-2.5 border border-zinc-300 text-zinc-700 rounded-xl font-medium hover:bg-zinc-50 t-cancel">Cancel</button>
+                    <button type="submit" class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 t-submit">Submit</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ADMIN VIEW -->
+        <div id="view-admin" class="hidden space-y-8">
+            <div class="flex items-center justify-between bg-zinc-900 text-white p-6 rounded-2xl shadow-sm">
+                <div class="flex items-center">
+                    <i data-lucide="shield-alert" class="w-8 h-8 text-amber-400 mr-4"></i>
+                    <div>
+                        <h2 class="text-2xl font-bold t-admin">Admin Panel</h2>
+                        <p class="text-zinc-400 text-sm mt-1">Manage items, match lost & found, and moderate content.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-zinc-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-zinc-50 border-b border-zinc-200 text-zinc-500 text-sm uppercase tracking-wider">
+                                <th class="p-4 font-medium t-type">Type</th>
+                                <th class="p-4 font-medium t-title">Title</th>
+                                <th class="p-4 font-medium t-category">Category</th>
+                                <th class="p-4 font-medium t-status">Status</th>
+                                <th class="p-4 font-medium text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-table-body" class="divide-y divide-zinc-200"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Floating FAB (All Sizes) -->
+    <button id="mobile-fab" onclick="handleReportClick()" class="hidden fixed bottom-6 right-6 bg-indigo-600 text-white p-4 rounded-full shadow-lg hover:bg-indigo-700 z-40 transition-transform hover:scale-105">
+        <i data-lucide="plus" class="h-6 w-6"></i>
+    </button>
+
+    <script src="script.js"></script>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>

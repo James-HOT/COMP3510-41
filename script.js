@@ -1,593 +1,475 @@
-// ────────────────────────────────────────────────
-// State & Constants
-// ────────────────────────────────────────────────
-const STORAGE_PREFIX = 'lf_kwai_2026_';
-const ITEMS_KEY = STORAGE_PREFIX + 'items';
-const USER_KEY = STORAGE_PREFIX + 'user';
-const LANG_KEY = STORAGE_PREFIX + 'lang';
-let items = JSON.parse(localStorage.getItem(ITEMS_KEY)) || [];
-let currentUser = localStorage.getItem(USER_KEY) || null;
-let lang = localStorage.getItem(LANG_KEY) || 'en';
-const ADMIN_EMAIL = "admin@gmail.com";
-const isLoggedIn = () => !!currentUser;
-const isAdmin = () => currentUser?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-
-// ────────────────────────────────────────────────
-// Save helpers
-// ────────────────────────────────────────────────
-function saveItems() { localStorage.setItem(ITEMS_KEY, JSON.stringify(items)); }
-function saveUser() {
-  if (currentUser) localStorage.setItem(USER_KEY, currentUser);
-  else localStorage.removeItem(USER_KEY);
-}
-function saveLang() { localStorage.setItem(LANG_KEY, lang); }
-
-// ────────────────────────────────────────────────
-// Language handling
-// ────────────────────────────────────────────────
-function updateLanguage() {
-  document.body.dataset.lang = lang;
-  document.querySelectorAll('[data-en][data-zh]').forEach(el => {
-    el.textContent = lang === 'zh' ? el.dataset.zh : el.dataset.en;
-  });
-  document.querySelectorAll('[data-en-placeholder][data-zh-placeholder]').forEach(el => {
-    el.placeholder = lang === 'zh' ? el.dataset.zhPlaceholder : el.dataset.enPlaceholder;
-  });
-  document.querySelectorAll('option[data-en][data-zh]').forEach(opt => {
-    opt.textContent = lang === 'zh' ? opt.dataset.zh : opt.dataset.en;
-  });
-  document.getElementById('langBtn').textContent = lang === 'zh' ? 'English' : '中文';
-  renderItems();
-}
-function toggleLanguage() {
-  lang = lang === 'zh' ? 'en' : 'zh';
-  saveLang();
-  updateLanguage();
-}
-
-// ────────────────────────────────────────────────
-// DOM cache & helpers
-// ────────────────────────────────────────────────
-const els = {
-  reportBtn: document.getElementById('reportBtn'),
-  matchBtn: document.getElementById('matchBtn'),
-  loginBtn: document.getElementById('loginBtn'),
-  adminNotice: document.getElementById('adminNotice'),
-  reportName: document.getElementById('reportName'),
-  itemsGrid: document.getElementById('itemsGrid'),
-  count: document.getElementById('count'),
-  typeFilter: document.getElementById('typeFilter'),
-  catFilter: document.getElementById('categoryFilter'),
-  searchInput: document.getElementById('searchInput'),
-};
-function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-// ────────────────────────────────────────────────
-// Auth UI
-// ────────────────────────────────────────────────
-function updateAuthUI() {
-  const isZh = lang === 'zh';
-  if (isLoggedIn()) {
-    els.loginBtn.textContent = isZh ? '登出' : 'Logout';
-    els.loginBtn.onclick = logout;
-    els.reportBtn.classList.remove('hidden');
-    if (isAdmin()) {
-      els.matchBtn.classList.remove('hidden');
-      els.adminNotice.classList.remove('hidden');
-      els.adminNotice.textContent = isZh
-        ? '管理員模式：只能配對類別與標題完全相同的物品 • 編輯未配對物品 • 刪除任何報告'
-        : 'Admin mode: Can only match same category & title • Edit unmatched • Delete any';
-    } else {
-      els.matchBtn.classList.add('hidden');
-      els.adminNotice.classList.add('hidden');
+// --- TRANSLATIONS ---
+const translations = {
+    en: {
+        appTitle: 'Lost & Found', login: 'Login', logout: 'Logout', register: 'Register', reportItem: 'Report Item',
+        adminPanel: 'Admin Panel', email: 'Email', password: 'Password', submit: 'Submit', cancel: 'Cancel',
+        type: 'Type', lost: 'Lost', found: 'Found', title: 'Title', desc: 'Description', category: 'Category',
+        photo: 'Photo', location: 'Location', contact: 'Contact Info', search: 'Search', allTypes: 'All Types',
+        allCats: 'All Categories', electronics: 'Electronics', clothing: 'Clothing', documents: 'Documents',
+        keys: 'Keys', pets: 'Pets', other: 'Other', match: 'Match', edit: 'Edit', delete: 'Delete', save: 'Save',
+        status: 'Status', active: 'Active', matched: 'Matched', noItems: 'No items found.', selectLoc: 'Select location on map',
+        adminHint: 'To become admin, login with email "admin"',
+        authTitle: 'Login or Register', authHint: "Enter your email and password. We'll create an account if you don't have one.",
+        continueBtn: 'Continue', authNav: 'Login / Register', incorrectPass: 'Incorrect password for this email.',
+        loginRequired: 'Please login to report an item.'
+    },
+    zh: {
+        appTitle: '失物招領', login: '登入', logout: '登出', register: '註冊', reportItem: '通報物品',
+        adminPanel: '管理員面板', email: '電子郵件', password: '密碼', submit: '送出', cancel: '取消',
+        type: '類型', lost: '遺失', found: '尋獲', title: '標題', desc: '描述', category: '分類',
+        photo: '照片', location: '地點', contact: '聯絡資訊', search: '搜尋', allTypes: '所有類型',
+        allCats: '所有分類', electronics: '電子產品', clothing: '衣物', documents: '文件',
+        keys: '鑰匙', pets: '寵物', other: '其他', match: '配對', edit: '編輯', delete: '刪除', save: '儲存',
+        status: '狀態', active: '處理中', matched: '已配對', noItems: '找不到物品。', selectLoc: '在地圖上選擇地點',
+        adminHint: '要成為管理員，請使用電子郵件 "admin" 登入',
+        authTitle: '登入或註冊', authHint: '請輸入電子郵件與密碼。若無帳號將自動為您註冊。',
+        continueBtn: '繼續', authNav: '登入 / 註冊', incorrectPass: '密碼錯誤。',
+        loginRequired: '請先登入以通報物品。'
     }
-    if (els.reportName) {
-      els.reportName.value = currentUser.split('@')[0] || currentUser;
-      els.reportName.readOnly = !isAdmin();
-    }
-  } else {
-    els.loginBtn.textContent = isZh ? '登入' : 'Login';
-    els.loginBtn.onclick = () => openModal('loginModal');
-    els.reportBtn.classList.add('hidden');
-    els.matchBtn.classList.add('hidden');
-    els.adminNotice.classList.add('hidden');
-    if (els.reportName) els.reportName.value = '';
-  }
-  updateLanguage();
-}
-
-// ────────────────────────────────────────────────
-// Login / Logout
-// ────────────────────────────────────────────────
-function handleLogin() {
-  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
-  const pw = document.getElementById('loginPassword').value;
-  if (!email || !pw) {
-    alert(lang === 'zh' ? '請輸入電郵和密碼' : 'Please enter email and password');
-    return;
-  }
-  currentUser = email;
-  saveUser();
-  closeModal('loginModal');
-  updateAuthUI();
-  alert(lang === 'zh' ? `歡迎，${currentUser}${isAdmin() ? '（管理員）' : ''}` : `Welcome, ${currentUser}${isAdmin() ? ' (admin)' : ''}`);
-  renderItems();
-}
-function logout() {
-  currentUser = null;
-  saveUser();
-  updateAuthUI();
-  renderItems();
-}
-
-// ────────────────────────────────────────────────
-// Report logic (image resize + geocode)
-// ────────────────────────────────────────────────
-let pendingImageDataUrl = null;
-document.getElementById('imageInput')?.addEventListener('change', e => {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      let w = img.width, h = img.height;
-      const MAX = 760;
-      if (w > h) { if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; } }
-      else { if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; } }
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      pendingImageDataUrl = canvas.toDataURL('image/jpeg', 0.78);
-      document.getElementById('preview').src = pendingImageDataUrl;
-      document.getElementById('preview').style.display = 'block';
-    };
-    img.src = ev.target.result;
-  };
-  reader.readAsDataURL(file);
-});
-
-async function geocode(locationText) {
-  if (!locationText.trim()) return { lat: 22.3683, lon: 114.1388 };
-  try {
-    const q = encodeURIComponent(locationText.trim() + ", Hong Kong");
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`);
-    if (!res.ok) return { lat: 22.3683, lon: 114.1388 };
-    const data = await res.json();
-    if (data?.[0]?.lat && data?.[0]?.lon) return { lat: +data[0].lat, lon: +data[0].lon };
-  } catch {}
-  return { lat: 22.3683, lon: 114.1388 };
-}
-
-async function submitReport() {
-  if (!isLoggedIn()) {
-    alert(lang === 'zh' ? '請先登入' : 'Please login first');
-    return;
-  }
-  const form = document.getElementById('reportForm');
-  if (!form.checkValidity()) {
-    form.reportValidity();
-    return;
-  }
-  const fd = new FormData(form);
-  const loc = (fd.get('location') || '').trim();
-  const coords = await geocode(loc);
-  const newItem = {
-    id: Date.now(),
-    userEmail: currentUser.toLowerCase(),
-    name: (fd.get('name') || '').trim() || currentUser.split('@')[0] || currentUser,
-    status: fd.get('status'),
-    category: fd.get('category'),
-    title: (fd.get('title') || '').trim(),
-    location: loc,
-    date: fd.get('date'),
-    description: (fd.get('description') || '').trim(),
-    contact: (fd.get('contact') || '').trim(),
-    image: pendingImageDataUrl,
-    lat: coords.lat,
-    lon: coords.lon,
-    created: new Date().toISOString()
-  };
-  items.unshift(newItem);
-  saveItems();
-  form.reset();
-  pendingImageDataUrl = null;
-  document.getElementById('preview').style.display = 'none';
-  closeModal('reportModal');
-  alert(lang === 'zh' ? `報告已提交！編號：${newItem.id}` : `Report submitted! ID: ${newItem.id}`);
-  renderItems();
-}
-
-// ────────────────────────────────────────────────
-// Matching logic
-// ────────────────────────────────────────────────
-function openMatchModal() {
-  if (!isAdmin()) return;
-
-  const lostItems = items.filter(i => i.status === 'lost');
-  const foundItems = items.filter(i => i.status === 'found');
-
-  if (lostItems.length === 0 || foundItems.length === 0) {
-    alert(lang === 'zh' ? '沒有可配對的遺失或拾獲物品' : 'No lost or found items available to match');
-    return;
-  }
-
-  const html = `
-    <div style="padding:0.5rem 1rem;">
-      <h3 style="margin:1rem 0 0.8rem;">${lang==='zh'?'選擇要配對的物品':'Select items to match'}</h3>
-      
-      <div style="margin-bottom:1.2rem;">
-        <label style="display:block; font-weight:600; margin-bottom:0.4rem;">
-          ${lang==='zh'?'遺失物品 (Lost)':'Lost item'} *
-        </label>
-        <select id="matchLostSelect" style="width:100%; padding:0.6rem; border-radius:6px; border:1px solid #d1d5db;">
-          <option value="">-- ${lang==='zh'?'請選擇遺失物品':'Select lost item'} --</option>
-          ${lostItems.map(i => `<option value="${i.id}">#${i.id} – ${i.title || '(無標題)'} (${i.date || '?'}) [${i.category}]</option>`).join('')}
-        </select>
-      </div>
-      
-      <div style="margin-bottom:1.6rem;">
-        <label style="display:block; font-weight:600; margin-bottom:0.4rem;">
-          ${lang==='zh'?'拾獲物品 (Found)':'Found item'} *
-        </label>
-        <select id="matchFoundSelect" style="width:100%; padding:0.6rem; border-radius:6px; border:1px solid #d1d5db;">
-          <option value="">-- ${lang==='zh'?'請選擇拾獲物品':'Select found item'} --</option>
-          ${foundItems.map(i => `<option value="${i.id}">#${i.id} – ${i.title || '(無標題)'} (${i.date || '?'}) [${i.category}]</option>`).join('')}
-        </select>
-      </div>
-    </div>
-  `;
-
-  let modal = document.getElementById('matchModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'matchModal';
-    modal.className = 'modal';
-    modal.innerHTML = `
-      <div class="modal-box" style="max-width:540px;">
-        <div class="modal-header">
-          <h2>${lang==='zh'?'配對遺失與拾獲物品':'Match Lost & Found Item'}</h2>
-          <span style="font-size:2.4rem;cursor:pointer;" onclick="closeModal('matchModal')">×</span>
-        </div>
-        <div class="modal-body" id="matchModalBody"></div>
-        <div class="modal-footer">
-          <button class="btn btn-outline" onclick="closeModal('matchModal')">${lang==='zh'?'取消':'Cancel'}</button>
-          <button class="btn btn-success" id="confirmMatchBtn" disabled>${lang==='zh'?'確認配對':'Confirm Match'}</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-  }
-
-  document.getElementById('matchModalBody').innerHTML = html;
-
-  // ─── IMPORTANT: Re-attach listeners every time ───
-  const confirmBtn   = document.getElementById('confirmMatchBtn');
-  const lostSelect   = document.getElementById('matchLostSelect');
-  const foundSelect  = document.getElementById('matchFoundSelect');
-
-  if (confirmBtn) {
-    confirmBtn.onclick = null;                    // prevent duplicates
-    confirmBtn.addEventListener('click', confirmMatch, { once: false });
-  }
-
-  if (lostSelect && foundSelect) {
-    lostSelect.removeEventListener('change', updateMatchButtonState);
-    foundSelect.removeEventListener('change', updateMatchButtonState);
-    lostSelect.addEventListener('change', updateMatchButtonState);
-    foundSelect.addEventListener('change', updateMatchButtonState);
-    updateMatchButtonState(); // run now
-  }
-
-  openModal('matchModal');
-}
-
-function updateMatchButtonState() {
-  const lostSelect  = document.getElementById('matchLostSelect');
-  const foundSelect = document.getElementById('matchFoundSelect');
-  const confirmBtn  = document.getElementById('confirmMatchBtn');
-
-  if (!lostSelect || !foundSelect || !confirmBtn) return;
-
-  const lostId  = Number(lostSelect.value) || 0;
-  const foundId = Number(foundSelect.value) || 0;
-
-  let canMatch = false;
-  let reason = "";
-
-  if (lostId === 0 || foundId === 0) {
-    reason = lang === 'zh' ? "請選擇遺失與拾獲物品" : "Select both a lost and a found item";
-  } else if (lostId === foundId) {
-    reason = lang === 'zh' ? "不能選擇同一件物品" : "Cannot match the same item with itself";
-  } else {
-    const lost  = items.find(i => i.id === lostId);
-    const found = items.find(i => i.id === foundId);
-
-    if (!lost || !found) {
-      reason = lang === 'zh' ? "物品不存在" : "Selected item no longer exists";
-    } else if (lost.status !== 'lost' || found.status !== 'found') {
-      reason = lang === 'zh' ? "只能配對「遺失」與「拾獲」狀態" : "Can only match lost + found status";
-    } else {
-      const sameCat   = lost.category === found.category;
-      const sameTitle = (lost.title || '').trim().toLowerCase() === (found.title || '').trim().toLowerCase();
-
-      if (sameCat && sameTitle) {
-        canMatch = true;
-      } else {
-        reason = lang === 'zh'
-          ? `不匹配：類別 ${sameCat ? '相同' : '不同'} | 標題 ${sameTitle ? '相同' : '不同'}`
-          : `No match: Category ${sameCat ? 'same' : 'different'} | Title ${sameTitle ? 'same' : 'different'}`;
-      }
-    }
-  }
-
-  confirmBtn.disabled = !canMatch;
-
-  if (canMatch) {
-    confirmBtn.title = "";
-    confirmBtn.textContent = lang === 'zh' ? "確認配對" : "Confirm Match";
-  } else {
-    confirmBtn.title = reason;
-    confirmBtn.textContent = lang === 'zh' ? `無法配對 (${reason})` : `Cannot Match (${reason})`;
-  }
-}
-
-function confirmMatch() {
-  const lostSelect  = document.getElementById('matchLostSelect');
-  const foundSelect = document.getElementById('matchFoundSelect');
-
-  if (!lostSelect || !foundSelect) {
-    alert(lang === 'zh' ? "配對視窗錯誤，請關閉後重新開啟" : "Match modal error – please close and reopen");
-    return;
-  }
-
-  const lostId  = Number(lostSelect.value);
-  const foundId = Number(foundSelect.value);
-
-  if (!lostId || !foundId || lostId === foundId) {
-    alert(lang === 'zh' ? "請選擇兩個不同的物品" : "Please select two different items");
-    return;
-  }
-
-  const lost  = items.find(i => i.id === lostId);
-  const found = items.find(i => i.id === foundId);
-
-  if (!lost || !found) {
-    alert(lang === 'zh' ? "物品不存在" : "Item not found");
-    return;
-  }
-
-  if (lost.status !== 'lost' || found.status !== 'found') {
-    alert(lang === 'zh' 
-      ? '只能配對「遺失」狀態與「拾獲」狀態的物品' 
-      : 'Can only match a "lost" item with a "found" item');
-    return;
-  }
-
-  const sameCategory = lost.category === found.category;
-  const sameTitle    = (lost.title   || '').trim().toLowerCase() === (found.title || '').trim().toLowerCase();
-
-  if (!sameCategory || !sameTitle) {
-    alert(lang === 'zh'
-      ? '只能配對「類別」和「標題」完全相同的物品（不分大小寫）'
-      : 'Can only match items with the exact same category and title (case-insensitive)');
-    return;
-  }
-
-  if (!confirm(lang === 'zh'
-    ? `確定配對？\n• 遺失物品 #${lost.id} (${lost.title || '(無標題)'}) → 狀態改為「已配對」\n• 拾獲物品 #${found.id} (${found.title || '(無標題)'}) → 將被**永久刪除**`
-    : `Confirm match?\n• Lost #${lost.id} (${lost.title || '(no title)'}) → status becomes "matched"\n• Found #${found.id} (${found.title || '(no title)'}) → will be **permanently deleted**`)) {
-    return;
-  }
-
-  // Perform the match
-  lost.status      = 'matched';
-  lost.matchedWith = found.id;
-  lost.matchedAt   = new Date().toISOString();
-  lost.matchedBy   = currentUser;
-
-  items = items.filter(i => i.id !== found.id);
-
-  saveItems();
-  closeModal('matchModal');
-
-  alert(lang === 'zh' 
-    ? `配對成功！遺失物品已標記為「已配對」，拾獲報告已移除。` 
-    : `Match successful! Lost item marked as matched, found report removed.`);
-
-  renderItems();
-}
-
-// ────────────────────────────────────────────────
-// Edit & Delete
-// ────────────────────────────────────────────────
-function openEditModal(id) {
-  if (!isAdmin()) return;
-  const item = items.find(i => i.id === id);
-  if (!item || item.status === 'matched') {
-    alert(lang === 'zh' ? '只能編輯遺失或拾獲物品' : 'Can only edit lost or found items');
-    return;
-  }
-
-  document.getElementById('editId').value = item.id;
-  document.getElementById('editStatus').value = item.status;
-  document.getElementById('editCategory').value = item.category;
-  document.getElementById('editTitle').value = item.title || '';
-  document.getElementById('editLocation').value = item.location || '';
-  document.getElementById('editDate').value = item.date || '';
-  document.getElementById('editDescription').value = item.description || '';
-  document.getElementById('editContact').value = item.contact || '';
-
-  openModal('editModal');
-}
-
-function saveEdit() {
-  const id = Number(document.getElementById('editId').value);
-  const item = items.find(i => i.id === id);
-  if (!item || !isAdmin()) return;
-
-  item.status = document.getElementById('editStatus').value;
-  item.category = document.getElementById('editCategory').value;
-  item.title = document.getElementById('editTitle').value.trim();
-  item.location = document.getElementById('editLocation').value.trim();
-  item.date = document.getElementById('editDate').value;
-  item.description = document.getElementById('editDescription').value.trim();
-  item.contact = document.getElementById('editContact').value.trim();
-
-  saveItems();
-  closeModal('editModal');
-  alert(lang === 'zh' ? '物品已更新' : 'Item updated');
-  renderItems();
-}
-
-function deleteItem(id) {
-  const item = items.find(i => i.id === id);
-  if (!item) return;
-
-  const isOwner = item.userEmail === currentUser?.toLowerCase();
-  if (!isOwner && !isAdmin()) {
-    return alert(lang === 'zh' ? '只能刪除自己的報告' : 'You can only delete your own reports');
-  }
-
-  if (!confirm(lang === 'zh' ? '確定刪除此報告？' : 'Delete this report?')) return;
-
-  items = items.filter(i => i.id !== id);
-  saveItems();
-  renderItems();
-}
-
-// ────────────────────────────────────────────────
-// Map & rendering
-// ────────────────────────────────────────────────
-let map = null;
-const markerGroups = {
-  lost: L.layerGroup(),
-  found: L.layerGroup(),
-  matched: L.layerGroup()
 };
 
-function initMap() {
-  if (map) return;
-  map = L.map('map', { zoomControl: true }).setView([22.3683, 114.1388], 14);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 19
-  }).addTo(map);
-  Object.values(markerGroups).forEach(g => g.addTo(map));
+let currentLang = 'en'; // Removed localStorage
+document.getElementById('lang-select').value = currentLang;
+
+function changeLang(lang) {
+    currentLang = lang;
+    // Removed localStorage
+    applyTranslations();
+    renderItems();
+    if(document.getElementById('view-admin').classList.contains('hidden') === false) renderAdminTable();
 }
 
-function clearAllMarkers() {
-  Object.values(markerGroups).forEach(g => g.clearLayers());
+function applyTranslations() {
+    const t = translations[currentLang];
+    document.getElementById('nav-title').innerText = t.appTitle;
+    document.querySelectorAll('.t-login').forEach(e => e.innerText = t.login);
+    document.querySelectorAll('.t-logout').forEach(e => e.innerText = t.logout);
+    document.querySelectorAll('.t-register').forEach(e => e.innerText = t.register);
+    document.querySelectorAll('.t-report').forEach(e => e.innerText = t.reportItem);
+    document.querySelectorAll('.t-admin').forEach(e => e.innerText = t.adminPanel);
+    document.querySelectorAll('.t-email').forEach(e => e.innerText = t.email);
+    document.querySelectorAll('.t-password').forEach(e => e.innerText = t.password);
+    document.querySelectorAll('.t-submit').forEach(e => e.innerText = t.submit);
+    document.querySelectorAll('.t-cancel').forEach(e => e.innerText = t.cancel);
+    document.querySelectorAll('.t-type').forEach(e => e.innerText = t.type);
+    document.querySelectorAll('.t-lost').forEach(e => e.innerText = t.lost);
+    document.querySelectorAll('.t-found').forEach(e => e.innerText = t.found);
+    document.querySelectorAll('.t-title').forEach(e => e.innerText = t.title);
+    document.querySelectorAll('.t-desc').forEach(e => e.innerText = t.desc);
+    document.querySelectorAll('.t-category').forEach(e => e.innerText = t.category);
+    document.querySelectorAll('.t-photo').forEach(e => e.innerText = t.photo);
+    document.querySelectorAll('.t-location').forEach(e => e.innerText = t.location);
+    document.querySelectorAll('.t-contact').forEach(e => e.innerText = t.contact);
+    document.querySelectorAll('.t-all-types').forEach(e => e.innerText = t.allTypes);
+    document.querySelectorAll('.t-all-cats').forEach(e => e.innerText = t.allCats);
+    document.querySelectorAll('.t-electronics').forEach(e => e.innerText = t.electronics);
+    document.querySelectorAll('.t-clothing').forEach(e => e.innerText = t.clothing);
+    document.querySelectorAll('.t-documents').forEach(e => e.innerText = t.documents);
+    document.querySelectorAll('.t-keys').forEach(e => e.innerText = t.keys);
+    document.querySelectorAll('.t-pets').forEach(e => e.innerText = t.pets);
+    document.querySelectorAll('.t-other').forEach(e => e.innerText = t.other);
+    document.querySelectorAll('.t-status').forEach(e => e.innerText = t.status);
+    document.querySelectorAll('.t-select-loc').forEach(e => e.innerText = t.selectLoc);
+    document.querySelectorAll('.t-admin-hint').forEach(e => e.innerText = t.adminHint);
+    document.querySelectorAll('.t-auth-title').forEach(e => e.innerText = t.authTitle);
+    document.querySelectorAll('.t-auth-hint').forEach(e => e.innerText = t.authHint);
+    document.querySelectorAll('.t-continue').forEach(e => e.innerText = t.continueBtn);
+    document.querySelectorAll('.t-auth-nav').forEach(e => e.innerText = t.authNav);
+    document.getElementById('search-input').placeholder = t.search + '...';
 }
 
-function addMarkersToMap(visibleItems) {
-  visibleItems.forEach(item => {
-    if (typeof item.lat !== 'number' || typeof item.lon !== 'number') return;
-    const group = markerGroups[item.status];
-    if (!group) return;
-    const color = item.status === 'lost' ? '#dc2626' : item.status === 'found' ? '#16a34a' : '#eab308';
-    const marker = L.circleMarker([item.lat, item.lon], {
-      radius: 10,
-      fillColor: color,
-      color: 'white',
-      weight: 3,
-      opacity: 1,
-      fillOpacity: 0.92
+// --- STATE & STORAGE (In-Memory Only) ---
+let currentUser = null; // Removed localStorage
+let items = []; // Removed localStorage
+let users = []; // In-memory users array
+let homeMode = 'list';
+let homeMapInstance = null;
+let reportMapInstance = null;
+let reportMarker = null;
+let reportLat = 25.0330, reportLng = 121.5654, reportLocName = '';
+let reportPhotoBase64 = '';
+
+function saveItems() { /* No-op: items are updated directly in memory */ }
+function saveUsers(newUsers) { users = newUsers; }
+function getUsers() { return users; }
+
+// --- NAVIGATION ---
+function updateNav() {
+    if (currentUser) {
+        document.getElementById('nav-logged-out').classList.add('hidden');
+        document.getElementById('nav-logged-in').classList.remove('hidden');
+        document.getElementById('nav-logged-in').classList.add('flex');
+        if (currentUser.isAdmin) {
+            document.getElementById('nav-admin-btn').classList.remove('hidden');
+            document.getElementById('nav-admin-btn').classList.add('flex');
+        } else {
+            document.getElementById('nav-admin-btn').classList.add('hidden');
+            document.getElementById('nav-admin-btn').classList.remove('flex');
+        }
+    } else {
+        document.getElementById('nav-logged-out').classList.remove('hidden');
+        document.getElementById('nav-logged-in').classList.add('hidden');
+        document.getElementById('nav-logged-in').classList.remove('flex');
+    }
+}
+
+function showView(viewId) {
+    ['home', 'auth', 'report', 'admin'].forEach(v => {
+        document.getElementById('view-' + v).classList.add('hidden');
     });
-    marker.bindPopup(`<b>${item.title || '(No title)'}</b><br>#${item.id}<br>${item.date || '—'}`);
-    group.addLayer(marker);
-  });
+    document.getElementById('view-' + viewId).classList.remove('hidden');
+    
+    document.getElementById('mobile-fab').classList.add('hidden');
+    if (viewId === 'home' && currentUser) {
+        document.getElementById('mobile-fab').classList.remove('hidden');
+    }
+
+    if (viewId === 'home') {
+        renderItems();
+        if (homeMode === 'map') setTimeout(initHomeMap, 100);
+    } else if (viewId === 'report') {
+        setTimeout(initReportMap, 100);
+    } else if (viewId === 'admin') {
+        renderAdminTable();
+    }
+}
+
+function handleReportClick() {
+    if (currentUser) {
+        showView('report');
+    } else {
+        alert(translations[currentLang].loginRequired);
+        showView('auth');
+    }
+}
+
+// --- AUTH ---
+function handleAuth(e) {
+    e.preventDefault();
+    const email = document.getElementById('auth-email').value;
+    const pass = document.getElementById('auth-password').value;
+    const err = document.getElementById('auth-error');
+    
+    if (email === 'admin') {
+        currentUser = { email: 'admin', isAdmin: true };
+        updateNav();
+        showView('admin');
+        err.classList.add('hidden');
+        return;
+    }
+
+    const currentUsers = getUsers();
+    const user = currentUsers.find(u => u.email === email);
+    
+    if (user) {
+        // Login
+        if (user.password === pass) {
+            currentUser = user;
+            updateNav();
+            showView('home');
+            err.classList.add('hidden');
+        } else {
+            err.innerText = translations[currentLang].incorrectPass;
+            err.classList.remove('hidden');
+        }
+    } else {
+        // Register new user
+        const newUser = { email, password: pass, isAdmin: false };
+        currentUsers.push(newUser);
+        saveUsers(currentUsers);
+        
+        currentUser = newUser;
+        updateNav();
+        showView('home');
+        err.classList.add('hidden');
+    }
+}
+
+function logout() {
+    currentUser = null;
+    // Removed localStorage
+    updateNav();
+    showView('home');
+}
+
+// --- HOME VIEW ---
+function setHomeMode(mode) {
+    homeMode = mode;
+    const btnList = document.getElementById('btn-mode-list');
+    const btnMap = document.getElementById('btn-mode-map');
+    const viewList = document.getElementById('home-list-mode');
+    const viewMap = document.getElementById('home-map-mode');
+
+    if (mode === 'list') {
+        btnList.className = "p-1.5 rounded-md flex items-center transition-colors bg-white shadow-sm text-indigo-600";
+        btnMap.className = "p-1.5 rounded-md flex items-center transition-colors text-zinc-500 hover:text-zinc-700";
+        viewList.classList.remove('hidden');
+        viewMap.classList.add('hidden');
+    } else {
+        btnMap.className = "p-1.5 rounded-md flex items-center transition-colors bg-white shadow-sm text-indigo-600";
+        btnList.className = "p-1.5 rounded-md flex items-center transition-colors text-zinc-500 hover:text-zinc-700";
+        viewMap.classList.remove('hidden');
+        viewList.classList.add('hidden');
+        setTimeout(initHomeMap, 100);
+    }
 }
 
 function renderItems() {
-  let visibleItems = isAdmin() ? [...items] :
-    isLoggedIn() ? items.filter(i => i.userEmail === currentUser.toLowerCase()) :
-    [...items];
+    const search = document.getElementById('search-input').value.toLowerCase();
+    const type = document.getElementById('filter-type').value;
+    const category = document.getElementById('filter-category').value;
+    const listContainer = document.getElementById('home-list-mode');
+    
+    const filtered = items.filter(item => {
+        const mSearch = item.title.toLowerCase().includes(search) || item.description.toLowerCase().includes(search);
+        const mType = type === 'all' || item.type === type;
+        const mCat = category === 'all' || item.category === category;
+        const mUser = currentUser ? item.reporterEmail === currentUser.email : true;
+        return mSearch && mType && mCat && mUser;
+    });
 
-  const typeVal = els.typeFilter.value;
-  if (typeVal !== 'all') visibleItems = visibleItems.filter(i => i.status === typeVal);
-
-  const catVal = els.catFilter.value;
-  if (catVal !== 'all') visibleItems = visibleItems.filter(i => i.category === catVal);
-
-  const query = (els.searchInput.value || '').trim().toLowerCase();
-  if (query) {
-    visibleItems = visibleItems.filter(i =>
-      (i.title||'').toLowerCase().includes(query) ||
-      (i.location||'').toLowerCase().includes(query) ||
-      (i.description||'').toLowerCase().includes(query)
-    );
-  }
-
-  els.count.textContent = visibleItems.length
-    ? `${visibleItems.length} ${lang==='zh' ? '個項目' : 'item'}${visibleItems.length > 1 && lang==='en' ? 's' : ''}`
-    : (lang==='zh' ? '暫無記錄' : 'No records found');
-
-  els.itemsGrid.innerHTML = visibleItems.map(item => {
-    const isOwn = item.userEmail === currentUser?.toLowerCase();
-    const canEdit = isAdmin() && (item.status === 'lost' || item.status === 'found');
-    const canDelete = isOwn || isAdmin();
-    const imgHtml = item.image
-      ? `<img src="${item.image}" alt="Item photo">`
-      : `<div class="no-photo">${lang==='zh'?'無相片':'No photo'}</div>`;
-
-    let btns = '';
-    if (canEdit) {
-      btns += `<button class="btn btn-primary" onclick="openEditModal(${item.id})">${lang==='zh'?'編輯':'Edit'}</button>`;
-    }
-    if (canDelete) {
-      btns += `<button class="btn btn-danger" onclick="deleteItem(${item.id})">${lang==='zh'?'刪除':'Delete'}</button>`;
-    }
-
-    return `
-      <div class="card">
-        <div class="card-img">
-          ${imgHtml}
-          <div class="badge badge-${item.status}">${item.status.toUpperCase()}</div>
-        </div>
-        <div class="card-body">
-          <div class="card-title">${item.title || (lang==='zh'?'(無標題)':'(No title)')}</div>
-          <div class="card-desc">${item.description || (lang==='zh'?'無描述':'No description')}</div>
-          <div class="meta">
-            <div><strong>${lang==='zh'?'地點':'Loc'}:</strong> ${item.location || '—'}</div>
-            <div><strong>${lang==='zh'?'日期':'Date'}:</strong> ${item.date || '—'}</div>
-          </div>
-          <div class="meta">
-            <div><strong>#</strong> ${item.id}</div>
-            <div>
-              ${isOwn ? `<span style="color:var(--success); font-weight:500;">${lang==='zh'?'您的':'Yours'}</span>` : ''}
-              ${isAdmin() && !isOwn ? `<span style="color:#7c3aed;">${lang==='zh'?'管理員查看':'Admin view'}</span>` : ''}
+    if (filtered.length === 0) {
+        listContainer.innerHTML = `<div class="col-span-full py-12 text-center text-zinc-500 bg-white rounded-xl border border-zinc-200 border-dashed">
+            <i data-lucide="filter" class="h-12 w-12 mx-auto mb-3 text-zinc-300"></i>
+            <p>${translations[currentLang].noItems}</p>
+        </div>`;
+    } else {
+        listContainer.innerHTML = filtered.map(item => `
+            <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-zinc-200 hover:shadow-md transition-shadow group flex flex-col">
+                <div class="relative h-48 bg-zinc-100 overflow-hidden">
+                    ${item.photo ? `<img src="${item.photo}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">` : 
+                    `<div class="w-full h-full flex items-center justify-center text-zinc-400"><i data-lucide="image" class="h-12 w-12 opacity-20"></i></div>`}
+                    <div class="absolute top-3 left-3 flex gap-2">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm backdrop-blur-md ${item.type === 'lost' ? 'bg-red-500/90 text-white' : 'bg-emerald-500/90 text-white'}">
+                            ${translations[currentLang][item.type]}
+                        </span>
+                        ${item.status === 'matched' ? `<span class="px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm backdrop-blur-md bg-indigo-500/90 text-white">${translations[currentLang].matched}</span>` : ''}
+                    </div>
+                </div>
+                <div class="p-4 flex-1 flex flex-col">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-bold text-lg text-zinc-900 line-clamp-1">${item.title}</h3>
+                        <span class="text-xs font-medium text-zinc-500 bg-zinc-100 px-2 py-1 rounded-md whitespace-nowrap ml-2">${translations[currentLang][item.category]}</span>
+                    </div>
+                    <p class="text-sm text-zinc-600 line-clamp-2 mb-4 flex-1">${item.description}</p>
+                    <div class="space-y-2 text-xs text-zinc-500 mt-auto pt-4 border-t border-zinc-100">
+                        <div class="flex items-center"><i data-lucide="map-pin" class="h-3.5 w-3.5 mr-1.5 text-zinc-400 shrink-0"></i><span class="truncate">${item.locationName}</span></div>
+                        <div class="flex items-center"><span class="font-medium mr-1.5 text-zinc-400">Contact:</span><span class="truncate">${item.contactInfo}</span></div>
+                        <div class="text-right text-[10px] text-zinc-400 mt-2">${new Date(item.createdAt).toLocaleDateString()}</div>
+                    </div>
+                </div>
             </div>
-          </div>
-          ${btns ? `<div class="actions">${btns}</div>` : ''}
-        </div>
-      </div>`;
-  }).join('');
+        `).join('');
+    }
+    lucide.createIcons();
 
-  clearAllMarkers();
-  addMarkersToMap(visibleItems);
-  if (map) map.invalidateSize();
+    if (homeMode === 'map' && homeMapInstance) {
+        // Clear existing markers
+        homeMapInstance.eachLayer(layer => {
+            if (layer instanceof L.Marker) homeMapInstance.removeLayer(layer);
+        });
+        // Add new markers
+        filtered.forEach(item => {
+            const marker = L.marker([item.lat, item.lng]).addTo(homeMapInstance);
+            marker.bindPopup(`
+                <div class="p-1 max-w-[200px]">
+                    <h3 class="font-semibold text-sm mb-1">${item.title}</h3>
+                    <span class="text-xs px-2 py-0.5 rounded-full ${item.type === 'lost' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}">${item.type.toUpperCase()}</span>
+                    ${item.photo ? `<img src="${item.photo}" class="w-full h-24 object-cover mt-2 rounded-md">` : ''}
+                    <p class="text-xs text-zinc-600 mt-1 line-clamp-2">${item.description}</p>
+                </div>
+            `);
+        });
+    }
 }
 
-// ────────────────────────────────────────────────
-// Init
-// ────────────────────────────────────────────────
-window.addEventListener('load', () => {
-  initMap();
-  updateAuthUI();
-  updateLanguage();
+function initHomeMap() {
+    if (!homeMapInstance) {
+        homeMapInstance = L.map('home-map').setView([25.0330, 121.5654], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(homeMapInstance);
+    }
+    homeMapInstance.invalidateSize();
+    renderItems();
+}
 
-  els.reportBtn.onclick = () => openModal('reportModal');
-  els.matchBtn.onclick = openMatchModal;
-  document.getElementById('langBtn').onclick = toggleLanguage;
+// --- REPORT VIEW ---
+function updateTypeUI() {
+    const isLost = document.querySelector('input[name="report-type"]:checked').value === 'lost';
+    const lblLost = document.getElementById('lbl-type-lost');
+    const lblFound = document.getElementById('lbl-type-found');
+    
+    if (isLost) {
+        lblLost.className = "flex-1 flex items-center justify-center py-3 px-4 rounded-xl border-2 cursor-pointer transition-all border-red-500 bg-red-50 text-red-700 font-semibold";
+        lblFound.className = "flex-1 flex items-center justify-center py-3 px-4 rounded-xl border-2 cursor-pointer transition-all border-zinc-200 hover:border-zinc-300 text-zinc-600";
+    } else {
+        lblFound.className = "flex-1 flex items-center justify-center py-3 px-4 rounded-xl border-2 cursor-pointer transition-all border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold";
+        lblLost.className = "flex-1 flex items-center justify-center py-3 px-4 rounded-xl border-2 cursor-pointer transition-all border-zinc-200 hover:border-zinc-300 text-zinc-600";
+    }
+}
 
-  els.typeFilter.addEventListener('change', renderItems);
-  els.catFilter.addEventListener('change', renderItems);
-  els.searchInput.addEventListener('input', renderItems);
+function handlePhotoUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 800, MAX_HEIGHT = 800;
+            let width = img.width, height = img.height;
+            if (width > height) {
+                if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+            } else {
+                if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+            }
+            canvas.width = width; canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            reportPhotoBase64 = canvas.toDataURL('image/jpeg', 0.7);
+            document.getElementById('photo-preview').src = reportPhotoBase64;
+            document.getElementById('photo-preview').classList.remove('hidden');
+        };
+        img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+}
 
-  setTimeout(() => map?.invalidateSize(), 400);
-  window.addEventListener('resize', () => map?.invalidateSize());
+function initReportMap() {
+    if (!reportMapInstance) {
+        reportMapInstance = L.map('report-map').setView([25.0330, 121.5654], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(reportMapInstance);
 
-  renderItems();
-});
+        reportMapInstance.on('click', function(e) {
+            reportLat = e.latlng.lat;
+            reportLng = e.latlng.lng;
+            
+            if (reportMarker) reportMapInstance.removeLayer(reportMarker);
+            reportMarker = L.marker([reportLat, reportLng]).addTo(reportMapInstance);
+
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${reportLat}&lon=${reportLng}`)
+                .then(res => res.json())
+                .then(data => {
+                    reportLocName = data.display_name || `${reportLat.toFixed(4)}, ${reportLng.toFixed(4)}`;
+                    const locDisplay = document.getElementById('selected-loc-display');
+                    locDisplay.innerText = reportLocName;
+                    locDisplay.classList.remove('hidden');
+                })
+                .catch(() => {
+                    reportLocName = `${reportLat.toFixed(4)}, ${reportLng.toFixed(4)}`;
+                    const locDisplay = document.getElementById('selected-loc-display');
+                    locDisplay.innerText = reportLocName;
+                    locDisplay.classList.remove('hidden');
+                });
+        });
+    }
+    reportMapInstance.invalidateSize();
+}
+
+function submitReport(e) {
+    e.preventDefault();
+    const err = document.getElementById('report-error');
+    if (!reportLocName) {
+        err.innerText = 'Please select a location on the map.';
+        err.classList.remove('hidden');
+        return;
+    }
+
+    const newItem = {
+        id: Date.now().toString(),
+        type: document.querySelector('input[name="report-type"]:checked').value,
+        title: document.getElementById('report-title').value,
+        category: document.getElementById('report-category').value,
+        description: document.getElementById('report-desc').value,
+        contactInfo: document.getElementById('report-contact').value,
+        photo: reportPhotoBase64,
+        lat: reportLat,
+        lng: reportLng,
+        locationName: reportLocName,
+        reporterEmail: currentUser.email,
+        createdAt: Date.now(),
+        status: 'active'
+    };
+
+    items.push(newItem);
+    saveItems();
+    
+    // Reset form
+    e.target.reset();
+    document.getElementById('photo-preview').classList.add('hidden');
+    document.getElementById('selected-loc-display').classList.add('hidden');
+    reportPhotoBase64 = '';
+    reportLocName = '';
+    if (reportMarker) reportMapInstance.removeLayer(reportMarker);
+    err.classList.add('hidden');
+    
+    showView('home');
+}
+
+// --- ADMIN VIEW ---
+function renderAdminTable() {
+    const tbody = document.getElementById('admin-table-body');
+    if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-zinc-500">${translations[currentLang].noItems}</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = items.map(item => {
+        const matches = item.status === 'active' ? items.filter(i => 
+            i.id !== item.id && i.type !== item.type && i.category === item.category && i.status === 'active' &&
+            (i.title.toLowerCase().includes(item.title.toLowerCase()) || item.title.toLowerCase().includes(i.title.toLowerCase()))
+        ) : [];
+
+        return `
+        <tr class="hover:bg-zinc-50 transition-colors group">
+            <td class="p-4">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.type === 'lost' ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'}">
+                    ${translations[currentLang][item.type]}
+                </span>
+            </td>
+            <td class="p-4">
+                <div class="font-medium text-zinc-900">${item.title}</div>
+                <div class="text-xs text-zinc-500 truncate max-w-xs">${item.description}</div>
+            </td>
+            <td class="p-4 text-sm text-zinc-600">${translations[currentLang][item.category]}</td>
+            <td class="p-4">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.status === 'active' ? 'bg-blue-100 text-blue-800' : 'bg-zinc-100 text-zinc-800'}">
+                    ${translations[currentLang][item.status]}
+                </span>
+                ${matches.length > 0 ? `<div class="mt-2 text-xs text-amber-600 flex items-center bg-amber-50 px-2 py-1 rounded border border-amber-200"><i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i>${matches.length} match(es)</div>` : ''}
+            </td>
+            <td class="p-4 text-right space-x-2">
+                ${matches.length > 0 ? `<button onclick="matchItems('${item.id}', '${matches[0].id}')" class="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-sm font-medium"><i data-lucide="check-circle" class="w-4 h-4 mr-1.5"></i>${translations[currentLang].match}</button>` : ''}
+                <button onclick="deleteItem('${item.id}')" class="inline-flex items-center p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+            </td>
+        </tr>
+        `;
+    }).join('');
+    lucide.createIcons();
+}
+
+function matchItems(id1, id2) {
+    const i1 = items.find(i => i.id === id1);
+    const i2 = items.find(i => i.id === id2);
+    if (i1) i1.status = 'matched';
+    if (i2) i2.status = 'matched';
+    saveItems();
+    renderAdminTable();
+}
+
+function deleteItem(id) {
+    if (confirm(currentLang === 'en' ? 'Are you sure you want to delete this item?' : '確定要刪除此物品嗎？')) {
+        items = items.filter(i => i.id !== id);
+        saveItems();
+        renderAdminTable();
+    }
+}
+
+// --- INIT ---
+applyTranslations();
+updateNav();
+showView('home');
+lucide.createIcons();
