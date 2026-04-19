@@ -84,7 +84,11 @@ function applyTranslations() {
 // --- STATE & STORAGE (In-Memory Only) ---
 let currentUser = null; // Removed localStorage
 let items = []; // Removed localStorage
+<<<<<<< HEAD
 let users = [{ email: 'Jack', password: 'Jack123', isAdmin: false }]; // Default user account
+=======
+let users = []; // In-memory users array
+>>>>>>> 605dacfb5d1dedd672d80b40838732d646073dea
 let homeMode = 'list';
 let homeMapInstance = null;
 let reportMapInstance = null;
@@ -153,8 +157,12 @@ function handleAuth(e) {
     const pass = document.getElementById('auth-password').value;
     const err = document.getElementById('auth-error');
     
+<<<<<<< HEAD
     // Check for admin account
     if (email === 'admin' && pass === 'admin') {
+=======
+    if (email === 'admin') {
+>>>>>>> 605dacfb5d1dedd672d80b40838732d646073dea
         currentUser = { email: 'admin', isAdmin: true };
         updateNav();
         showView('admin');
@@ -177,6 +185,7 @@ function handleAuth(e) {
             err.classList.remove('hidden');
         }
     } else {
+<<<<<<< HEAD
         // Check for registration agreement
         const agreeCheckbox = document.getElementById('auth-register-agree');
         if (!agreeCheckbox.checked) {
@@ -184,6 +193,8 @@ function handleAuth(e) {
             err.classList.remove('hidden');
             return;
         }
+=======
+>>>>>>> 605dacfb5d1dedd672d80b40838732d646073dea
         // Register new user
         const newUser = { email, password: pass, isAdmin: false };
         currentUsers.push(newUser);
@@ -196,6 +207,7 @@ function handleAuth(e) {
     }
 }
 
+<<<<<<< HEAD
 // --- AUTH VIEW TOGGLE ---
 function checkRegisterMode() {
     const email = document.getElementById('auth-email').value;
@@ -213,6 +225,8 @@ function checkRegisterMode() {
     }
 }
 
+=======
+>>>>>>> 605dacfb5d1dedd672d80b40838732d646073dea
 function logout() {
     currentUser = null;
     // Removed localStorage

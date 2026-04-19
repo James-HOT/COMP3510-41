@@ -107,6 +107,7 @@
                 </div>
                 <h2 class="text-2xl font-bold text-zinc-900 t-auth-title">Login or Register</h2>
                 <p class="text-zinc-500 text-sm mt-2 t-auth-hint">Enter your email and password. We'll create an account if you don't have one.</p>
+                <p class="text-zinc-500 text-sm mt-2 t-admin-hint">To become admin, login with email "admin"</p>
             </div>
             <div id="auth-error" class="hidden mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-start text-sm"></div>
             <form onsubmit="handleAuth(event)" class="space-y-5">
@@ -114,7 +115,7 @@
                     <label class="block text-sm font-medium text-zinc-700 mb-1.5 t-email">Email</label>
                     <div class="relative">
                         <i data-lucide="mail" class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400"></i>
-                        <input type="text" id="auth-email" required oninput="checkRegisterMode()" class="w-full pl-10 pr-4 py-2.5 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-indigo-500" placeholder="name@example.com">
+                        <input type="text" id="auth-email" required class="w-full pl-10 pr-4 py-2.5 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-indigo-500" placeholder="name@example.com">
                     </div>
                 </div>
                 <div>
@@ -123,6 +124,7 @@
                         <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400"></i>
                         <input type="password" id="auth-password" required class="w-full pl-10 pr-4 py-2.5 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-indigo-500" placeholder="••••••••">
                     </div>
+                </div>
                 </div>
                 <div id="register-checkbox" class="hidden">
                     <label class="flex items-start cursor-pointer">
