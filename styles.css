@@ -1,0 +1,6 @@
+/* Custom CSS to supplement Tailwind */
+body { font-family: 'Inter', sans-serif; background-color: #fafafa; }
+.hidden { display: none !important; }
+#map { height: 100%; width: 100%; z-index: 1; }
+.tab-active { border-color: #6366f1; color: #4f46e5; background-color: #e0e7ff; }
+.tab-inactive { border-color: #e4e4e7; color: #52525b; }
